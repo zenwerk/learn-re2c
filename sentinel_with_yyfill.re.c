@@ -44,8 +44,11 @@ static int lex(Input *in)
     int count = 0;
 loop:
     in->tok = in->cur;
+    /* 英単語をカウントするだけの簡単な例 */
+
     /*!re2c
     re2c:eof = 0;
+    re2c:yyfill:enable = 0;
     re2c:api:style = free-form;
     re2c:define:YYCTYPE  = char;
     re2c:define:YYCURSOR = in->cur;

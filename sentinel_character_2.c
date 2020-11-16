@@ -5,12 +5,22 @@ static int lex(const char *YYCURSOR)
 {
 	int count = 0;
 loop:
-	
+	/*!re2c
+	re2c:define:YYCTYPE = char;
+	re2c:yyfill:enable = 0;
+
+	*      { return -1; }
+	[\x00] { return count; }
+    ['] ([^'\\] | [\\][^])* ['] { ++count; goto loop; }
+	[ ]+   { goto loop; }
+
+	*/
+
 {
 	char yych;
 	yych = *YYCURSOR;
 	switch (yych) {
-	case 0x00:	goto yy2;
+	case 0x00:	goto yy2; /* センチネル文字 */
 	case ' ':	goto yy6;
 	case '\'':	goto yy9;
 	default:	goto yy4;

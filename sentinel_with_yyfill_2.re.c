@@ -44,6 +44,8 @@ static int lex(Input *in)
     int count = 0;
 loop:
     in->tok = in->cur;
+    /* \0 が途中で出現しても大丈夫な EOF=0 な単語カウント */
+
     /*!re2c
     re2c:eof = 0;
     re2c:api:style = free-form;
