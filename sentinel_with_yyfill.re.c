@@ -44,11 +44,11 @@ static int lex(Input *in)
     int count = 0;
 loop:
     in->tok = in->cur;
-    /* 英単語をカウントするだけの簡単な例 */
-
+    /* 英単語をカウントするだけの簡単な例
+     * センチネル文字を使う場合の YYFILL ルールは正しいコードを生成しない
+     */
     /*!re2c
-    re2c:eof = 0;
-    re2c:yyfill:enable = 0;
+    re2c:eof = -1;
     re2c:api:style = free-form;
     re2c:define:YYCTYPE  = char;
     re2c:define:YYCURSOR = in->cur;
@@ -56,10 +56,10 @@ loop:
     re2c:define:YYLIMIT  = in->lim;
     re2c:define:YYFILL   = "fill(in) == 0";
 
-	*      { return -1; }
-	$      { return count; }
-	[a-z]+ { ++count; goto loop; }
-	[ ]+   { goto loop; }
+	*        { return -1; }
+	[\x00]   { return count; }
+	[a-z]+   { ++count; goto loop; }
+	[ ]+     { goto loop; }
 
     */
 }
