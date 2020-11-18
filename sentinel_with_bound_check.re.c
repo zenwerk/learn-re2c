@@ -7,6 +7,7 @@ static int lex(const char *str, unsigned int len)
     const char *YYCURSOR = str, *YYLIMIT = str + len, *YYMARKER;
     int count = 0;
 
+    // http://re2c.org/manual/manual_c.html#sentinel-character-with-bounds-checks
 loop:
     /*!re2c
     re2c:define:YYCTYPE = char;

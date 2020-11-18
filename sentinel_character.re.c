@@ -3,6 +3,7 @@
 static int lex(const char *YYCURSOR)
 {
 	int count = 0;
+	// http://re2c.org/manual/manual_c.html#sentinel-character
 loop:
 	/*!re2c
 	re2c:define:YYCTYPE = char;
