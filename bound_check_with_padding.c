@@ -17,23 +17,24 @@ loop:
     
 {
 	char yych;
-	if (YYLIMIT <= YYCURSOR) return -1;
+	if (YYLIMIT <= YYCURSOR) return -1; // YYFILL の処理
 	yych = *YYCURSOR;
 	switch (yych) {
-	case 0x00:	goto yy2;
+	case 0x00:	goto yy2; // センチネル文字
 	case ' ':	goto yy6;
 	case '\'':	goto yy9;
 	default:	goto yy4;
 	}
 yy2:
 	++YYCURSOR;
+	// 境界チェック
 	{ return YYCURSOR + YYMAXFILL - 1 == YYLIMIT ? count : -1; }
 yy4:
 	++YYCURSOR;
 	{ return -1; }
-yy6:
+yy6: // [ ]+  { goto loop; }
 	++YYCURSOR;
-	if (YYLIMIT <= YYCURSOR) return -1;
+	if (YYLIMIT <= YYCURSOR) return -1; // YYFILL
 	yych = *YYCURSOR;
 	switch (yych) {
 	case ' ':	goto yy6;
@@ -43,7 +44,7 @@ yy8:
 	{ goto loop; }
 yy9:
 	++YYCURSOR;
-	if (YYLIMIT <= YYCURSOR) return -1;
+	if (YYLIMIT <= YYCURSOR) return -1; // YYFILL
 	yych = *YYCURSOR;
 	switch (yych) {
 	case '\'':	goto yy11;
@@ -55,7 +56,7 @@ yy11:
 	{ ++count; goto loop; }
 yy13:
 	++YYCURSOR;
-	if (YYLIMIT <= YYCURSOR) return -1;
+	if (YYLIMIT <= YYCURSOR) return -1; // YYFILL
 	yych = *YYCURSOR;
 	goto yy9;
 }

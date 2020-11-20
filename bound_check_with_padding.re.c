@@ -15,7 +15,7 @@ loop:
     /*!re2c
     re2c:api:style = free-form;
     re2c:define:YYCTYPE = char;
-    re2c:define:YYFILL = "return -1;"; // 常に失敗する
+    re2c:define:YYFILL = "return -1;"; // 簡単のため常に失敗するようにしている
 
     *                           { return -1; }
     [\x00]                      { return YYCURSOR + YYMAXFILL - 1 == YYLIMIT ? count : -1; } // 停止ルール

@@ -45,7 +45,7 @@ static int lex(Input *in)
 loop:
     in->tok = in->cur;
     /* 英単語をカウントするだけの簡単な例
-     * センチネル文字を使う場合の YYFILL ルールは正しいコードを生成しない
+     * センチネル文字を使う場合の YYFILL ルールは「bound_check_with_padding」タイプ
      */
     /*!re2c
     re2c:eof = -1;
@@ -54,7 +54,7 @@ loop:
     re2c:define:YYCURSOR = in->cur;
     re2c:define:YYMARKER = in->mar;
     re2c:define:YYLIMIT  = in->lim;
-    re2c:define:YYFILL   = "fill(in) == 0";
+    re2c:define:YYFILL   = "fill(in) == 0;"; // ルール内にセミコロン必要
 
 	*        { return -1; }
 	[\x00]   { return count; }

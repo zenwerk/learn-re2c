@@ -30,8 +30,87 @@ default:
 }
 ```
 
+この設定に
+
+```
+re2c:yyfill:enable = 1;
+re2c:define:YYFILL = "...";
+```
+
+を追加すると「YYFILL + EOF のルール」(yyfill_with_sentinel_character)になる
+
 
 - sentinel_with_bound_check.c
+
+
+---------------------------------------------------------------------------
+
+
+# パディング付き境界チェック方
+
+EOFじゃないほうの、センチネル文字をつかう。
+YYFILLを有効にしている
+つまり
+- `re2c:eof = -1` かつ `re2c:yyfill:enable = 1` である場合
+
+
+このとき生成されるコードは、レキサーのオートマトンが遷移するごとに以下のようにYYFILLコードが挿入される
+
+```c
+yy6: // [ ]+  { goto loop; }
+	++YYCURSOR;
+	if (YYLIMIT <= YYCURSOR) return -1; // YYFILL
+	yych = *YYCURSOR;
+	switch (yych) {
+	case ' ':	goto yy6;
+	default:	goto yy8;
+	}
+```
+
+つまり、遷移するごとに現在位置がYYLIMITに達しているかチェックしている
+
+
+
+最後、センチネル文字でのルールで、以下のように確認している
+- (現在のカーソル位置+YYMAXFILL-1) が YYLIMIT と等しいか?
+
+```c
+	{ return YYCURSOR + YYMAXFILL - 1 == YYLIMIT ? count : -1; }
+```
+
+
+
+これらのルールは以下のようなセンチネル文字をパディングするユーティリティ関数の存在が前提となっている。
+
+```c
+// make a copy of the string with YYMAXFILL zeroes at the end
+// 入力文字列の最後にYYMAXFILLの分だけ\0をパディングした文字列のコピーを作成する
+static void test(const char *str, unsigned int len, int res)
+{
+    char *s = (char*) malloc(len + YYMAXFILL);
+    memcpy(s, str, len);
+    memset(s + len, 0, YYMAXFILL); // YYMAXFILL分\0を末尾にパディングセットしている
+    int r = lex(s, len);
+    free(s);
+    assert(r == res);
+}
+```
+
+- bound_check_with_padding.c
+
+
+---------------------------------------------------------------------------
+
+
+# 汎用APIによるカスタムメソッド
+
+このソースコード例では「sentinel_with_bound_check.re.c」と同じ処理方法だが、
+生成されるC言語のコードがそれぞれ自分で定義した処理に置き換わっている。
+どの部分をカスタマイズしたいのかを比較すれば、どのように変更したいかが把握しやすくなるだろう。
+
+
+
+- custom_method_with_generic_api.c
 
 
 ---------------------------------------------------------------------------
@@ -66,9 +145,45 @@ yyFillLabel0:
 受諾される文字が来ず、バッファ再充填がされなかったとき、レキサーを正常終了させるという動作になる。
 
 
-- sentinel_with_yyfill.c
+- yyfill_with_sentinel_character.c
 
 
 ---------------------------------------------------------------------------
 
 
+
+
+
+
+['] ([^'\\] | [\\][^])* [']
+これは引用符でかこまれた、'か\以外の任意の位置文字、または\ ^ のいずれかで構成された文字列を表す。
+
+
+
+
+
+
+
+
+以下の通り sentinel_with_bound_check とはつまり YYFILL を無効にした EOF ルールのこと
+
+EOF without YYFILL
+```c
+	default:
+		if (YYLIMIT <= YYCURSOR) goto yyeof1;
+		goto yy2;
+	}
+```
+
+
+EOF + YYFILL
+```c
+	default:
+		if (YYLIMIT <= YYCURSOR) {
+			if (YYFILL() == 0) goto yyFillLabel0;
+			goto yyeof1;
+		}
+		goto yy2;
+	}
+yy2:
+```
