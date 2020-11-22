@@ -113,7 +113,11 @@ static void test(const char *str, unsigned int len, int res)
 - custom_method_with_generic_api.c
 
 
+
 ---------------------------------------------------------------------------
+次からはYYFILLの動作についてのサンプルソース
+---------------------------------------------------------------------------
+
 
 
 # YYFILL + EOF のルール
@@ -150,6 +154,75 @@ yyFillLabel0:
 
 ---------------------------------------------------------------------------
 
+
+# YYFILL + パディング
+- EOFルールじゃないほうのセンチネル文字を使うパターン
+- バッファ再充填あり
+
+
+サンプルソースは YYFILL に失敗したら `return -1` して即座に失敗する
+この場合で生成されるソースコードは以下のようになる
+- 文字を読み込む度に YYLIMIT のチェックが行われる
+  - YYFILL が成功しても `goto yyFillLabel0;` のような処理が行われず、そのままマッチング処理に入る
+- `yyfill_with_sentinel_character` との違いは、`default`節で失敗したときに YYLIMITチェックが入るのではなく、文字読み込みの度にYYLIMITチェックが入る点
+
+
+```c
+ yy6: // [ ]+   { goto loop; }
+	++in->cur;
+	if (in->lim <= in->cur) if (fill(in, 1) != 0) return -1; // YYFILL
+	yych = *in->cur;
+	switch (yych) {
+	case ' ':	goto yy6;
+	default:	goto yy8;
+	}                      
+```
+
+
+- yyfill_with_padding.c
+
+
+---------------------------------------------------------------------------
+---------------------------------------------------------------------------
+
+
+# Storable State
+`-f` または `--storable-state` オプションを忘れると変なコードが出力される。
+
+`/*!getstate:re2c*/` の箇所が以下のように置換される
+- `re2c:define:YYGETSTATE` から取得できる状態変数からステートマシンの状態へ goto する
+
+```c
+    switch (in->state) {
+default:
+	goto yy0; // 初期状態へ
+case 0: // END
+	if (in->lim <= in->cur) goto yyeof1;
+	goto yyFillLabel0;
+case 1: // READY
+	if (in->lim <= in->cur) goto yy4;
+	goto yyFillLabel1;
+case 2: // WAITING
+	if (in->lim <= in->cur) goto yy10;
+	goto yyFillLabel2;
+}
+```
+
+
+```c
+	default:
+		if (in->lim <= in->cur) {
+			in->state = 1;  // YYSETSTATE
+			return WAITING; // YYFILL の置換結果がこうなる
+		}
+		goto yy4;
+	}
+```
+
+
+- storable_state.c
+
+---------------------------------------------------------------------------
 
 
 
