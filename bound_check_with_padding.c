@@ -20,14 +20,14 @@ loop:
 	if (YYLIMIT <= YYCURSOR) return -1; // YYFILL の処理
 	yych = *YYCURSOR;
 	switch (yych) {
-	case 0x00:	goto yy2; // センチネル文字
+	case 0x00:	goto yy2; // パディング文字
 	case ' ':	goto yy6;
 	case '\'':	goto yy9;
 	default:	goto yy4;
 	}
 yy2:
 	++YYCURSOR;
-	// 境界チェック
+	// 停止ルールのチェック
 	{ return YYCURSOR + YYMAXFILL - 1 == YYLIMIT ? count : -1; }
 yy4:
 	++YYCURSOR;

@@ -1,8 +1,8 @@
 # センチネル文字のルール
 
-（YYFILL = 0 かつ EOF が有効なルール）
+（YYFILL = 0 かつ re2c:eof 無効なルール）
 は基本的に `goto loop;` で先頭に戻ったあと、一番最初の switch にセンチネル文字判定がくる
-センチネル文字もだった場合は `$` なルールに goto してレキサーが終了する。
+センチネル文字もだった場合は 番兵ルールに goto してレキサーが終了する。
 
 
 - sentinel_character.c
@@ -196,13 +196,13 @@ yyFillLabel0:
     switch (in->state) {
 default:
 	goto yy0; // 初期状態へ
-case 0: // END
+case 0:
 	if (in->lim <= in->cur) goto yyeof1;
 	goto yyFillLabel0;
-case 1: // READY
+case 1:
 	if (in->lim <= in->cur) goto yy4;
 	goto yyFillLabel1;
-case 2: // WAITING
+case 2:
 	if (in->lim <= in->cur) goto yy10;
 	goto yyFillLabel2;
 }

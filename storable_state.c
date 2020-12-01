@@ -53,13 +53,13 @@ static Status lex(Input *in, unsigned int *recv)
     switch (in->state) {
 default:
 	goto yy0; // 初期状態へ
-case 0: // END
+case 0:
 	if (in->lim <= in->cur) goto yyeof1;
 	goto yyFillLabel0;
-case 1: // READY
+case 1:
 	if (in->lim <= in->cur) goto yy4;
 	goto yyFillLabel1;
-case 2: // WAITING
+case 2:
 	if (in->lim <= in->cur) goto yy10;
 	goto yyFillLabel2;
 }
@@ -100,7 +100,7 @@ yyFillLabel0:
 	case 'z':	goto yy5;
 	default:
 		if (in->lim <= in->cur) {
-			in->state = 0;
+			in->state = 0; // 状態を保存する
 			return WAITING;
 		}
 		goto yy3;
@@ -143,8 +143,8 @@ yyFillLabel1:
 	case 'z':	goto yy8;
 	default:
 		if (in->lim <= in->cur) {
-			in->state = 1;
-			return WAITING;
+			in->state = 1;  // 状態を保存する
+			return WAITING; // YYFILL の置換結果
 		}
 		goto yy4;
 	}
@@ -185,7 +185,7 @@ yyFillLabel2:
 	case 'z':	goto yy8;
 	default:
 		if (in->lim <= in->cur) {
-			in->state = 2;
+			in->state = 2;  // 状態を保存する
 			return WAITING;
 		}
 		goto yy10;

@@ -83,9 +83,9 @@ yyFillLabel0:
 	}
 yy2:
 	++in->cur;
-yy3:
+yy3: // *      { return -1; }
 	{ return -1; }
-yy4:
+yy4: // [ ]+   { goto loop; }
 	++in->cur;
 yyFillLabel1:
 	yych = *in->cur;

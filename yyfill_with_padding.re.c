@@ -8,27 +8,35 @@
 
 typedef struct {
     FILE *file;
+    // YYMAXFILL分のパディング分だけバッファを広くとる
     char buf[SIZE + YYMAXFILL], *lim, *cur, *mar, *tok;
     int eof;
 } Input;
 
 static int fill(Input *in, size_t need)
 {
+    // ファイル終端に到達済み
     if (in->eof) {
         return 1;
     }
+    // free = (現在解析している箇所 - バッファの開始地点) = 解析済みの領域
     const size_t free = in->tok - in->buf;
     if (free < need) {
         return 2;
     }
+    // free分だけバッファをシフトする
     memmove(in->buf, in->tok, in->lim - in->tok);
     in->lim -= free;
     in->cur -= free;
     in->mar -= free;
     in->tok -= free;
+    // シフトした分だけアドレス位置を更新する
     in->lim += fread(in->lim, 1, free, in->file);
+    // ファイル終端まで読み込んだかチェックしてフラグをセットしておく
     if (in->lim < in->buf + SIZE) {
+        // フラグをセットする
         in->eof = 1;
+        // ヌル文字をパディングする
         memset(in->lim, 0, YYMAXFILL);
         in->lim += YYMAXFILL;
     }
@@ -54,9 +62,10 @@ loop:
     re2c:define:YYCURSOR = in->cur;
     re2c:define:YYMARKER = in->mar;
     re2c:define:YYLIMIT  = in->lim;
-    re2c:define:YYFILL   = "if (fill(in, @@) != 0) return -1;";
+    re2c:define:YYFILL   = "if (fill(in, @@) != 0) return -1;"; // YYFILL失敗時はレキサーを終了する
 
     *                           { return -1; }
+    // 停止ルール
     [\x00]                      { return (in->lim - in->cur == YYMAXFILL - 1) ? count : -1; }
     ['] ([^'\\] | [\\][^])* ['] { ++count; goto loop; }
     [ ]+                        { goto loop; }

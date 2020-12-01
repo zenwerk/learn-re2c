@@ -7,26 +7,34 @@
 
 typedef struct {
     FILE *file;
+    // 最後の入力文字の1文字後ろ番兵文字を付与する必要があるので SIZE+1 のメモリを用意する
     char buf[SIZE + 1], *lim, *cur, *mar, *tok;
     int eof;
 } Input;
 
 static int fill(Input *in)
 {
+    // ファイル終端に到達済み
     if (in->eof) {
         return 1;
     }
+    // free = (現在解析している箇所 - バッファの開始地点) = 解析済みの領域
     const size_t free = in->tok - in->buf;
-    if (free < 1) {
+    if (free < 1) { // shift する領域がない
         return 2;
     }
+    // free分だけバッファをシフトする
     memmove(in->buf, in->tok, in->lim - in->tok);
+    // シフトした分だけアドレス位置を更新する
     in->lim -= free;
     in->cur -= free;
     in->mar -= free;
     in->tok -= free;
+    // シフトした分だけファイルから読み込む
     in->lim += fread(in->lim, 1, free, in->file);
+    // 番兵文字をセットする
     in->lim[0] = 0;
+    // ファイル終端まで読み込んだかチェックしてフラグをセットしておく
     in->eof |= in->lim < in->buf + SIZE;
     return 0;
 }
@@ -44,7 +52,6 @@ static int lex(Input *in)
     int count = 0;
 loop:
     in->tok = in->cur;
-    /* \0 が途中で出現しても大丈夫な EOF=0 な単語カウント */
 
     /*!re2c
     re2c:eof = 0;

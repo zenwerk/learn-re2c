@@ -60,7 +60,7 @@ loop:
         re2c:define:YYLIMIT    = "in->lim";
         re2c:define:YYGETSTATE = "in->state";
         re2c:define:YYSETSTATE = "in->state = @@;";
-        re2c:define:YYFILL     = "return WAITING;";
+        re2c:define:YYFILL     = "return WAITING;"; // storable-state の YYFILL は呼び出し元へ現在の状態を return しなければならない。さらなる入力は呼び出し元から供給され、レジュームする。
 
         packet = [a-z]+[;];
 
@@ -83,7 +83,9 @@ void test(const char **packets, Status status)
     Status st;
     unsigned int send = 0, recv = 0;
 
+    // 無限ループ
     for (;;) {
+        // lex が字句を解析すると Status を返す
         st = lex(&in, &recv);
         if (st == END) {
             LOG("done: got %u packets\n", recv);
@@ -95,14 +97,17 @@ void test(const char **packets, Status status)
                 fprintf(fw, "%s", *packets++);
                 ++send;
             }
+            // バッファ充填は /*!re2c .. */ の外側で呼び出して管理する
             st = fill(&in);
             LOG("queue: '%s'\n", in.buf);
+            // 異常終了
             if (st == BIG_PACKET) {
                 LOG("error: packet too big\n");
                 break;
             }
             assert(st == READY);
         } else {
+            // 異常終了
             assert(st == BAD_PACKET);
             LOG("error: ill-formed packet\n");
             break;

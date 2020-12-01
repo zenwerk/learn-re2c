@@ -7,17 +7,16 @@ static int lex(const char *str, unsigned int len)
     const char *YYCURSOR = str, *YYLIMIT = str + len, *YYMARKER;
     int count = 0;
 
-    // http://re2c.org/manual/manual_c.html#sentinel-character-with-bounds-checks
 loop:
     /*!re2c
     re2c:define:YYCTYPE = char;
-    re2c:yyfill:enable = 0;
-    re2c:eof = 0;
+    re2c:yyfill:enable = 0; // バッファ充填関数を使用しない
+    re2c:eof = 0; // ヌル文字(\0)を番兵文字として指定
 
-    *        { return -1; }
-    $        { return count; }
-    [a-z]+   { ++count; goto loop; }
-    [ ]+     { goto loop; }
+    *                           { return -1; } // 失敗
+    $                           { return count; } // 番兵文字が出現したときのルール
+    ['] ([^'\\] | [\\][^])* ['] { ++count; goto loop; }
+    [ ]+                        { goto loop; }
 
     */
 }
@@ -26,7 +25,7 @@ loop:
 int main()
 {
     TEST("", 0);
-    TEST("one two three", 3);
-    TEST("f0ur", -1);
+    TEST("'qu\0tes' 'are' 'fine: \\'' ", 3);
+    TEST("'unterminated\\'", -1);
     return 0;
 }
