@@ -11,6 +11,7 @@ static int lex(const char *str, unsigned int len)
 {
     const char *YYCURSOR = str, *YYLIMIT = str + len + YYMAXFILL;
     int count = 0;
+    // http://re2c.org/manual/manual_c.html#bounds-checks-with-padding
 loop:
     /*!re2c
     re2c:api:style = free-form;
