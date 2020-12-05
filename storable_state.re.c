@@ -32,6 +32,9 @@ static Status fill(Input *in)
 
     if (free < 1) return BIG_PACKET;
 
+    LOG("buf: %p\ntok: %p\nlim: %p\n", in->buf, in->tok, in->lim);
+    LOG("free:%lu | shift:%lu\n", free, shift);
+
     // 処理した分だけ各ポインタの指すアドレスを -shift
     memmove(in->buf, in->tok, BUFSIZE - shift);
     in->lim -= shift;
@@ -104,7 +107,7 @@ void test(const char **packets, Status status)
                 fprintf(fw, "%s", *packets++);
                 ++send;
             }
-            // バッファ充填は /*!re2c .. */ の外側で呼び出して管理する
+            // バッファ充填は / *!re2c .. */ の外側で呼び出して管理する
             st = fill(&in);
             LOG("queue: '%s'\n", in.buf);
             // 異常終了

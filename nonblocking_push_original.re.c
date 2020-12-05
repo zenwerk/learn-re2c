@@ -37,21 +37,28 @@ struct input_t {
     if (free < 1) return false;
     const size_t shift = (tok - buf); // 解析済み領域
 
+    printf("buf: %p\ntok: %p\ncur: %p\nlim: %p\n", buf, tok, cur, lim);
+    printf("free:%ld | shift:%ld\n", free, shift);
+
     memmove(buf, tok, SIZE - shift);
     lim -= shift;
     cur -= shift;
     tok -= shift;
     mark -= shift;
-    // size_t to_read = SIZE - (lim - buf);
     printf("> Reading input, can take up to %lu bytes\n", free);
     size_t bytes_read = fread(lim, 1, free, file);
+
+    // YYLIMIT が YYCURSOR と一緒に伸長していく
     lim += bytes_read;
+    // ノンバッファリング(nonblocking)な動作にするため番兵文字を末尾に追加する
+    // cur と lim が同時に伸長するので同じアドレスになる -> (lim <= cur)が常に引っかかる -> 常に storable-state の return が動く
     lim[0] = 0;
 
     // quick make a copy of buffer with newlines replaced w/ _
-    char b[40];
-    snprintf(b, 40, "%s", buf);
-    for(int i = 0; i < 40; i++) {
+    char b[SIZE+YYMAXFILL];
+    int written;
+    written = snprintf(b, SIZE+YYMAXFILL, "%s", buf);
+    for(int i = 0; i < written; i++) {
       if ('\n' == b[i]) { b[i] = '_'; }
     }
     printf("> Read %lu bytes from input, current buffer: >%.40s<\n", bytes_read, b);
@@ -87,6 +94,7 @@ const char * STATUSES[] = {
 static status_t lex(input_t &in)
 {
 /*!getstate:re2c*/
+    in.tok = in.cur;
 /*!re2c
     re2c:define:YYCTYPE  = char;
     re2c:define:YYCURSOR = in.cur;
@@ -146,6 +154,7 @@ int main()
           write = NULL;
         }
 
+        // NEED_MORE_INPUT 状態のたびに読み込む
         in.fill();
         break;
 
@@ -154,12 +163,15 @@ int main()
 
       default:
         // careful, need to reset state (re2c forgets to do it)
-        YYSETSTATE(0);
+        // コマンドの入力が完了したら、レキサーを初期状態に戻して番兵文字チェックを動作させる
+        // re2c:eof が有効なので lim[0] = 0 が動作しレキサーが終了する
+        YYSETSTATE(0); 
         break;
     }
 
     result = lex(in);
     printf("Received response from lexer: %s\n", STATUSES[result]);
+    printf("----------------------------------------------------------------------------------\n");
   }
 
 end:
