@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#define DEBUG    0
+#define DEBUG    1
 #define LOG(...) if (DEBUG) fprintf(stderr, __VA_ARGS__);
 #define BUFSIZE  10
 
@@ -32,14 +32,21 @@ static Status fill(Input *in)
 
     if (free < 1) return BIG_PACKET;
 
+    // 処理した分だけ各ポインタの指すアドレスを -shift
     memmove(in->buf, in->tok, BUFSIZE - shift);
     in->lim -= shift;
     in->cur -= shift;
     in->mar -= shift;
     in->tok -= shift;
 
+    // limを起点に最大free分だけfileから読み取り
     const size_t read = fread(in->lim, 1, free, in->file);
-    in->lim += read;
+    // \0 が番兵文字で来るので、read 0 となり in->lim と in->cur が重なる
+	LOG("read %ld bytes\n", read);
+	if (read == 0) {
+		LOG("in->lim = %p ; in->cur = %p\n", in->lim, in->cur);
+	}
+    in->lim += read; // 読み込み分だけ末尾を後ろへ
     in->lim[0] = 0; // append sentinel symbol
 
     return READY;

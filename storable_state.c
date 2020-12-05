@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#define DEBUG    0
+#define DEBUG    1
 #define LOG(...) if (DEBUG) fprintf(stderr, __VA_ARGS__);
 #define BUFSIZE  10
 
@@ -40,6 +40,11 @@ static Status fill(Input *in)
     in->tok -= shift;
 
     const size_t read = fread(in->lim, 1, free, in->file);
+	// 最後は 0 が終わりで来るので、read 0 となり in->lim と in->cur がかさなる
+	LOG("read %ld bytes\n", read);
+	if (read == 0) {
+		LOG("in->lim = %p ; in->cur = %p\n", in->lim, in->cur);
+	}
     in->lim += read;
     in->lim[0] = 0; // append sentinel symbol
 
@@ -212,7 +217,10 @@ void test(const char **packets, Status status)
     unsigned int send = 0, recv = 0;
 
     for (;;) {
+		LOG("--------------------\n");
+		LOG("in->cur = %s\n", in.cur);
         st = lex(&in, &recv);
+		LOG("Current State -> %d\n", in.state);
         if (st == END) {
             LOG("done: got %u packets\n", recv);
             break;
@@ -237,7 +245,7 @@ void test(const char **packets, Status status)
         }
     }
 
-    LOG("\n");
+    LOG("\n\n");
     assert(st == status);
     if (st == END) assert(recv == send);
 
