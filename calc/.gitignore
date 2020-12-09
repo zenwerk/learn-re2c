@@ -1,0 +1,8 @@
+y.output
+y.tab.c
+lex.yy.c
+lex.c
+*.o
+*.out
+*.exe
+calc
