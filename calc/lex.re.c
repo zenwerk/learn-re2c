@@ -13,7 +13,7 @@
 int yylex(char *cursor, yypstate *pstate)
 {
     int num;
-    char *YYMARKER;
+    char *marker;
     char *token;
 
 loop:
@@ -22,6 +22,7 @@ loop:
     re2c:api:style = free-form;
     re2c:define:YYCTYPE  = char;
     re2c:define:YYCURSOR = cursor;
+    re2c:define:YYMARKER = marker;
     re2c:yyfill:enable   = 0;
 
     D = [0-9];
